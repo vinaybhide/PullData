@@ -57,6 +57,7 @@ namespace PullData
             DateTime selectedDate = dateTimeFromDate.Value;
             DataManager dataMgr = new DataManager();
             dataMgr.getAllMFNAVForDate(selectedDate.ToString("yyyy-MM-dd"));
+
         }
 
         private void buttonLoadFundHouse_Click(object sender, EventArgs e)
@@ -72,7 +73,7 @@ namespace PullData
         {
             DataManager dataMgr = new DataManager();
             DataTable tableNAV = dataMgr.getNAVRecordsTable(System.Convert.ToInt32(comboBoxSchemeName.SelectedValue), dateTimeFromDate.Text, dateTimeToDate.Text);
-            dataGridViewNAVData.DataSource = tableNAV;
+            dataGridViewStockData.DataSource = tableNAV;
         }
 
         private void buttonFetchAllForRange_Click(object sender, EventArgs e)
@@ -100,13 +101,69 @@ namespace PullData
         {
             DataManager dataMgr = new DataManager();
             DataTable portfolioTable = dataMgr.openMFPortfolio("a@a.com", "TestPF", "2");
-            dataGridViewNAVData.DataSource = portfolioTable;
+            dataGridViewStockData.DataSource = portfolioTable;
         }
 
         private void buttonUpdateFromLastFetch_Click(object sender, EventArgs e)
         {
             DataManager dataMgr = new DataManager();
             dataMgr.UpdateNAVFromLastFetchDate();
+        }
+
+        private void buttonFetchStockMaster_Click(object sender, EventArgs e)
+        {
+            StockManager stockManager = new StockManager();
+            string exchangeCode = comboBoxExchangeCode.SelectedItem.ToString().Equals("NSE") ? "NS" : "BO";
+            MessageBox.Show("Number of recrods inserted = " +  stockManager.FetchStockMasterFromWebAndInsert(exchangeCode));
+        }
+
+        private void buttonGetSymbols_Click(object sender, EventArgs e)
+        {
+            StockManager stockManager = new StockManager();
+            string exchangeCode = comboBoxExchangeCode.SelectedItem.ToString().Equals("NSE") ? "NS" : "BO";
+
+            DataTable stockMaster = stockManager.getStockMaster(exchangeCode);
+
+            checkedListBoxSymbol.Items.Add("---All---");
+
+            foreach (DataRow stockrow in stockMaster.Rows)
+            {
+                checkedListBoxSymbol.Items.Add(stockrow["SYMBOL"].ToString());
+            }
+        }
+
+        private void buttonGetStockData_Click(object sender, EventArgs e)
+        {
+            StockManager stockManager = new StockManager();
+            string exchangeCode = comboBoxExchangeCode.SelectedItem.ToString().Equals("NSE") ? "NS" : "BO";
+            foreach (var item in checkedListBoxSymbol.CheckedItems)
+            {
+                if (item.ToString().Equals("---All---"))
+                {
+                    foreach (var itemObject in checkedListBoxSymbol.Items)
+                    {
+                        stockManager.FetchOnlineAndSaveDailyStockData(itemObject.ToString(), comboBoxExchangeCode.SelectedItem.ToString(), equitytype:"EQ", 
+                            outputsize: comboBoxOutputSize.SelectedItem.ToString(),
+                            time_interval: comboBoxInterval.SelectedItem.ToString());
+                    }
+                    break;
+                }
+                else
+                {
+                    stockManager.FetchOnlineAndSaveDailyStockData(item.ToString(), comboBoxExchangeCode.SelectedItem.ToString(), equitytype: "EQ",
+                        outputsize: comboBoxOutputSize.SelectedItem.ToString(),
+                        time_interval: comboBoxInterval.SelectedItem.ToString());
+                }
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            DateTime dateOne = dateTimePicker1.Value;
+            DateTime dateTwo = dateTimePicker2.Value;
+
+            TimeSpan Result = dateOne - dateTwo;
+            MessageBox.Show(Result.ToString());
         }
     }
 }
